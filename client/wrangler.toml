@@ -79,8 +79,8 @@ pages_build_output_dir = ".vercel/output/static"
 
 ######## PRODUCTION environment config ########
 
-# [env.production.vars]
-# API_KEY = "abc123"
+[env.production.vars]
+NEXT_PUBLIC_API_URL = "rust-first.octpsubaru.workers.dev/"
 
 # [[env.production.kv_namespaces]]
 # binding = "MY_KV_NAMESPACE"

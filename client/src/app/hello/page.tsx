@@ -6,7 +6,10 @@ import axios from 'axios';
 export default function Home() {
   useEffect(() => {
     const _dataFetch = async () => {
-      const res = await axios.get(process.env.NEXT_PUBLIC_API_URL ?? '');
+      const res = await axios.get(
+        // `https//${process.env.NEXT_PUBLIC_API_URL}` ?? ''
+        'https://rust-first.octpsubaru.workers.dev/'
+      );
       const users = res.data;
       setUsers(users);
       console.log(res);
