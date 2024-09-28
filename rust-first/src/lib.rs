@@ -10,7 +10,10 @@ struct Users {
 
 #[event(fetch, respond_with_errors)]
 pub async fn main(request: Request, env: Env, _ctx: Context) -> Result<Response> {
-    Router::new()
+    
+    // let cors = Cors::default().with_origins(vec!["http://localhost:3000", "https://cloudflare-anything.pages.dev/"]);
+    let cors = Cors::default().with_origins(vec!["*"]);
+      Router::new()
         .get_async("/", |_, ctx| async move {
                     //get all users
             let d1 = ctx.env.d1("DB")?;
@@ -43,5 +46,6 @@ pub async fn main(request: Request, env: Env, _ctx: Context) -> Result<Response>
             Response::ok("post ok!")  
         })
         .run(request, env)
-        .await
+        .await?
+	      .with_cors(&cors)
 }
