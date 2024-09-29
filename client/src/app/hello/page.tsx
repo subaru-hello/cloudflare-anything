@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import styles from '../page.module.css';
 import styled from 'styled-components';
 import axios from 'axios';
+import ButtonWithTo from '@/components/atoms/ButtonWithTo';
 export default function Home() {
   useEffect(() => {
     const _dataFetch = async () => {
@@ -34,6 +35,9 @@ export default function Home() {
           </FlexDiv>
         ))}
       </UserBox>
+      <ButtonWrapper>
+        <ButtonWithTo to="/">homeへ戻る</ButtonWithTo>
+      </ButtonWrapper>
     </main>
   );
 }
@@ -58,4 +62,8 @@ const NameDiv = styled.div`
 
 const UserBox = styled.div`
   width: 200px;
+`;
+
+const ButtonWrapper = styled.div`
+  margin: 0 auto;
 `;
