@@ -1,6 +1,8 @@
 use worker::*;
 use serde::{Serialize,Deserialize};
 use serde_json::from_str;
+use std::convert::Infallible;
+use futures::StreamExt;
 
 #[derive(Serialize,Deserialize,Debug)]
 struct Users {
@@ -11,8 +13,8 @@ struct Users {
 #[event(fetch, respond_with_errors)]
 pub async fn main(request: Request, env: Env, _ctx: Context) -> Result<Response> {
     
-    // let cors = Cors::default().with_origins(vec!["http://localhost:3000", "https://cloudflare-anything.pages.dev/"]);
-    let cors = Cors::default().with_origins(vec!["*"]);
+    let cors = Cors::default().with_origins(vec!["https://cloudflare-anything.pages.dev/"]);
+    // let cors = Cors::default().with_origins(vec!["*"]);
       Router::new()
         .get_async("/", |_, ctx| async move {
                     //get all users
@@ -33,7 +35,40 @@ pub async fn main(request: Request, env: Env, _ctx: Context) -> Result<Response>
                 None => Response::error("Not found", 404),
             }
         })
-        .post_async("/", |mut req, ctx| async move {
+        .get_async("/sse-users", |_req, ctx| async move {
+          let d1 = ctx.env.d1("DB")?;
+      
+          // Fetch all users from the database
+          let statement = d1.prepare("SELECT * FROM users");
+          let result = statement.all().await?;
+          let users = result.results::<Users>().unwrap();
+      
+          // Convert the users list to JSON and format it for SSE
+          let stream = futures::stream::unfold(users.into_iter(), |mut users_iter| async {
+              match users_iter.next() {
+                  Some(user) => {
+                      // SSE format: "data: {json}\n\n"
+                      let event = format!(
+                          "data: {}\n\n",
+                          serde_json::to_string(&user).unwrap()
+                      );
+                      Some((event, users_iter))
+                  }
+                  None => None,
+              }
+          });
+      
+          // Create the response as an SSE stream
+          let mut resp = Response::from_stream(
+            stream.map(|data| Ok::<Vec<u8>, Infallible>(data.as_bytes().to_vec()))
+        )?;
+          resp.headers_mut().set("Content-Type", "text/event-stream")?;
+          resp.headers_mut().set("Cache-Control", "no-cache")?;
+          resp.headers_mut().set("Connection", "keep-alive")?;
+      
+          Ok(resp)
+      })
+      .post_async("/", |mut req, ctx| async move {
       //post user
       let json_text = req.text().await?;
       let user: Users = from_str(json_text.as_str()).unwrap();
